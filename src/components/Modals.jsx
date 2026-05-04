@@ -125,10 +125,10 @@ function Overlay({ onClose, children }) {
 }
 
 export function EditModal({ site, onSave, onClose }) {
-  const [form, setForm] = useState({ name: '', url: '', storage: '' });
+  const [form, setForm] = useState({ name: '' });
 
   useEffect(() => {
-    if (site) setForm({ name: site.name, url: site.url, storage: site.storage });
+    if (site) setForm({ name: site.name });
   }, [site]);
 
   if (!site) return null;
@@ -136,16 +136,57 @@ export function EditModal({ site, onSave, onClose }) {
   return (
     <Overlay onClose={onClose}>
       <div style={styles.title}>Edit — {site.name}</div>
-      {['name', 'url', 'storage'].map(field => (
-        <div key={field} style={styles.field}>
-          <label style={styles.label}>{field === 'storage' ? 'Storage Size' : field.charAt(0).toUpperCase() + field.slice(1)}</label>
-          <input
-            style={styles.input}
-            value={form[field]}
-            onChange={e => setForm(prev => ({ ...prev, [field]: e.target.value }))}
-          />
+
+      <div style={styles.field}>
+        <label style={styles.label}>Site Name</label>
+        <input
+          style={styles.input}
+          value={form.name}
+          onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
+        />
+      </div>
+
+      <div style={styles.field}>
+        <label style={styles.label}>URL</label>
+        <div style={{
+          height: '36px',
+          padding: '0 10px',
+          border: '1px solid #e0e0e0',
+          borderRadius: '8px',
+          fontSize: '13px',
+          color: '#999',
+          background: '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+          overflow: 'hidden',
+        }}>
+          {site.url}
         </div>
-      ))}
+        <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+          URL changes must be made in SharePoint Admin Center
+        </div>
+      </div>
+
+      <div style={styles.field}>
+        <label style={styles.label}>Storage Size</label>
+        <div style={{
+          height: '36px',
+          padding: '0 10px',
+          border: '1px solid #e0e0e0',
+          borderRadius: '8px',
+          fontSize: '13px',
+          color: '#999',
+          background: '#f5f5f5',
+          display: 'flex',
+          alignItems: 'center',
+        }}>
+          {site.storage}
+        </div>
+        <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+          Storage data is managed by Microsoft and updated automatically
+        </div>
+      </div>
+
       <div style={styles.actions}>
         <div style={styles.btnCancel} role="button" tabIndex={0} onClick={onClose}>Cancel</div>
         <div style={styles.btnBlue} role="button" tabIndex={0} onClick={() => onSave(site.id, form)}>Save Changes</div>

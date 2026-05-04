@@ -8,9 +8,13 @@ export function useSites() {
     setSites(prev => [...prev, { ...newSite, id: Date.now().toString() }]);
   }
 
-  function updateSite(id, updates) {
-    setSites(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-  }
+ function updateSite(id, updates) {
+  const allowedFields = ['name'];
+  const safeUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([key]) => allowedFields.includes(key))
+  );
+  setSites(prev => prev.map(s => s.id === id ? { ...s, ...safeUpdates } : s));
+}
 
   function deleteSite(id) {
     setSites(prev => prev.filter(s => s.id !== id));
