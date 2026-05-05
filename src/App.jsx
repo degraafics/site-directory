@@ -6,11 +6,12 @@ import { useSites } from './hooks/useSites';
 import AdminView from './pages/AdminView';
 import OwnerView from './pages/OwnerView';
 
-const MAX_WIDTH = '1240px';
+const OWNER_MAX_WIDTH = '1240px';
+const ADMIN_MAX_WIDTH = '1440px';
 
 const styles = {
-  notes: {
-    maxWidth: MAX_WIDTH,
+  ownerNotes: {
+    maxWidth: ADMIN_MAX_WIDTH,
     margin: '0 auto',
     padding: '0 24px 32px',
   },
@@ -54,12 +55,6 @@ const styles = {
     borderBottom: '1px solid #e0e0e0',
     padding: '0 24px',
   },
-  navInner: {
-    maxWidth: MAX_WIDTH,
-    margin: '0 auto',
-    display: 'flex',
-    gap: '4px',
-  },
   navLink: {
     display: 'inline-block',
     padding: '10px 16px',
@@ -76,11 +71,11 @@ const styles = {
   },
 };
 
-function NavBar() {
+function NavBar({ maxWidth }) {
   const location = useLocation();
   return (
     <div style={styles.navBar}>
-      <div style={styles.navInner}>
+      <div style={{ maxWidth, margin: '0 auto', display: 'flex', gap: '4px' }}>
         <Link
           to="/"
           style={{
@@ -105,6 +100,10 @@ function NavBar() {
 }
 
 function AppContent() {
+  const location = useLocation();
+  const isAdmin = location.pathname === '/admin';
+  const maxWidth = ADMIN_MAX_WIDTH;
+
   const { sites, addSite, updateSite, deleteSite, inactiveSites, sitesWithNoOwner } = useSites();
 
   const [editSite, setEditSite] = useState(null);
@@ -136,18 +135,13 @@ function AppContent() {
 
   return (
     <div>
-      <Topbar maxWidth={MAX_WIDTH} />
-      <NavBar />
+      <Topbar maxWidth={maxWidth} />
+      <NavBar maxWidth={maxWidth} />
 
       <Routes>
         <Route
           path="/"
-          element={
-            <OwnerView
-              sites={sites}
-              {...sharedProps}
-            />
-          }
+          element={<OwnerView sites={sites} {...sharedProps} />}
         />
         <Route
           path="/admin"
@@ -162,19 +156,21 @@ function AppContent() {
         />
       </Routes>
 
-      <div style={styles.notes}>
-        <div style={styles.notesInner}>
-          <div style={styles.notesHead}>
-            <span style={styles.notesIcon}>i</span>
-            Important Notes
+      {!isAdmin && (
+        <div style={styles.ownerNotes}>
+          <div style={styles.notesInner}>
+            <div style={styles.notesHead}>
+              <span style={styles.notesIcon}>i</span>
+              Important Notes
+            </div>
+            <ul style={styles.notesList}>
+              <li>Ownership change requests will be reviewed by IT administrators</li>
+              <li>Site deletions are permanent and cannot be undone</li>
+              <li>You will receive email confirmations for all requested changes</li>
+            </ul>
           </div>
-          <ul style={styles.notesList}>
-            <li>Ownership change requests will be reviewed by IT administrators</li>
-            <li>Site deletions are permanent and cannot be undone</li>
-            <li>You will receive email confirmations for all requested changes</li>
-          </ul>
         </div>
-      </div>
+      )}
 
       {editSite && <EditModal site={editSite} onSave={handleSaveEdit} onClose={() => setEditSite(null)} />}
       {ownerSite && <ChangeOwnerModal site={ownerSite} onClose={() => setOwnerSite(null)} />}
