@@ -1,19 +1,20 @@
 import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Topbar from './components/Topbar';
-import MetricCards from './components/MetricCards';
-import SitesTable from './components/SitesTable';
 import { EditModal, ChangeOwnerModal, DeleteModal, AddModal } from './components/Modals';
 import { useSites } from './hooks/useSites';
+import AdminView from './pages/AdminView';
+import OwnerView from './pages/OwnerView';
 
 const MAX_WIDTH = '1240px';
 
 const styles = {
-  page: {
-    padding: '32px 24px',
+  notes: {
     maxWidth: MAX_WIDTH,
     margin: '0 auto',
+    padding: '0 24px 32px',
   },
-  notes: {
+  notesInner: {
     background: '#eff6ff',
     border: '1px solid #b3d1f5',
     borderRadius: '8px',
@@ -48,9 +49,62 @@ const styles = {
     fontSize: '13px',
     lineHeight: 1.8,
   },
+  navBar: {
+    background: '#f8f9fa',
+    borderBottom: '1px solid #e0e0e0',
+    padding: '0 24px',
+  },
+  navInner: {
+    maxWidth: MAX_WIDTH,
+    margin: '0 auto',
+    display: 'flex',
+    gap: '4px',
+  },
+  navLink: {
+    display: 'inline-block',
+    padding: '10px 16px',
+    fontSize: '13px',
+    fontWeight: 500,
+    color: '#555',
+    textDecoration: 'none',
+    borderBottom: '2px solid transparent',
+    cursor: 'pointer',
+  },
+  navLinkActive: {
+    color: '#005CB9',
+    borderBottom: '2px solid #005CB9',
+  },
 };
 
-export default function App() {
+function NavBar() {
+  const location = useLocation();
+  return (
+    <div style={styles.navBar}>
+      <div style={styles.navInner}>
+        <Link
+          to="/"
+          style={{
+            ...styles.navLink,
+            ...(location.pathname === '/' ? styles.navLinkActive : {}),
+          }}
+        >
+          My Sites
+        </Link>
+        <Link
+          to="/admin"
+          style={{
+            ...styles.navLink,
+            ...(location.pathname === '/admin' ? styles.navLinkActive : {}),
+          }}
+        >
+          Admin
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function AppContent() {
   const { sites, addSite, updateSite, deleteSite, inactiveSites, sitesWithNoOwner } = useSites();
 
   const [editSite, setEditSite] = useState(null);
@@ -73,22 +127,43 @@ export default function App() {
     setShowAdd(false);
   }
 
+  const sharedProps = {
+    onEdit: site => setEditSite(site),
+    onChangeOwner: site => setOwnerSite(site),
+    onDelete: site => setDeleteSiteTarget(site),
+    onAdd: () => setShowAdd(true),
+  };
+
   return (
     <div>
       <Topbar maxWidth={MAX_WIDTH} />
+      <NavBar />
 
-      <div style={styles.page}>
-        <MetricCards total={sites.length} actionNeeded={inactiveSites} noOwner={sitesWithNoOwner} />
-
-        <SitesTable
-          sites={sites}
-          onEdit={site => setEditSite(site)}
-          onChangeOwner={site => setOwnerSite(site)}
-          onDelete={site => setDeleteSiteTarget(site)}
-          onAdd={() => setShowAdd(true)}
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <OwnerView
+              sites={sites}
+              {...sharedProps}
+            />
+          }
         />
+        <Route
+          path="/admin"
+          element={
+            <AdminView
+              sites={sites}
+              inactiveSites={inactiveSites}
+              sitesWithNoOwner={sitesWithNoOwner}
+              {...sharedProps}
+            />
+          }
+        />
+      </Routes>
 
-        <div style={styles.notes}>
+      <div style={styles.notes}>
+        <div style={styles.notesInner}>
           <div style={styles.notesHead}>
             <span style={styles.notesIcon}>i</span>
             Important Notes
@@ -106,5 +181,13 @@ export default function App() {
       {deleteSiteTarget && <DeleteModal site={deleteSiteTarget} onConfirm={handleConfirmDelete} onClose={() => setDeleteSiteTarget(null)} />}
       {showAdd && <AddModal onSave={handleAdd} onClose={() => setShowAdd(false)} />}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }

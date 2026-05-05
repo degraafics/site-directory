@@ -163,7 +163,7 @@ function parseSortableDate(str) {
   return new Date(str).getTime() || 0;
 }
 
-export default function SitesTable({ sites, onEdit, onChangeOwner, onDelete, onAdd }) {
+export default function SitesTable({ sites, isAdmin, onEdit, onChangeOwner, onDelete, onAdd }) {
   const [query, setQuery] = useState('');
   const [hoveredRow, setHoveredRow] = useState(null);
   const [hoveredAct, setHoveredAct] = useState(null);
@@ -182,7 +182,11 @@ export default function SitesTable({ sites, onEdit, onChangeOwner, onDelete, onA
   const filtered = sites.filter(s => {
     if (!query) return true;
     const q = query.toLowerCase();
-    return s.name.toLowerCase().includes(q) || s.url.toLowerCase().includes(q);
+    return (
+      s.name.toLowerCase().includes(q) ||
+      s.url.toLowerCase().includes(q) ||
+      (s.owner && s.owner.toLowerCase().includes(q))
+    );
   });
 
   const sorted = [...filtered].sort((a, b) => {
@@ -191,6 +195,11 @@ export default function SitesTable({ sites, onEdit, onChangeOwner, onDelete, onA
     if (sortCol === 'name') {
       valA = a.name.toLowerCase();
       valB = b.name.toLowerCase();
+      return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+    }
+    if (sortCol === 'owner') {
+      valA = (a.owner || '').toLowerCase();
+      valB = (b.owner || '').toLowerCase();
       return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
     }
     if (sortCol === 'storage') {
@@ -242,6 +251,7 @@ export default function SitesTable({ sites, onEdit, onChangeOwner, onDelete, onA
   const columns = [
     { key: 'name', label: 'Site Name', sortable: true, width: '200px' },
     { key: 'url', label: 'URL', sortable: false },
+    ...(isAdmin ? [{ key: 'owner', label: 'Owner', sortable: true, width: '180px' }] : []),
     { key: 'storage', label: 'Storage Size', sortable: true },
     { key: 'accessed', label: 'Last Accessed', sortable: true },
     { key: 'actions', label: '', sortable: false },
@@ -251,8 +261,12 @@ export default function SitesTable({ sites, onEdit, onChangeOwner, onDelete, onA
     <div style={styles.panel}>
       <div style={styles.panelHeader}>
         <div>
-          <div style={styles.panelTitle}>My Sites</div>
-          <div style={styles.panelSub}>View and manage your SharePoint sites</div>
+          <div style={styles.panelTitle}>
+            {isAdmin ? 'All Sites' : 'My Sites'}
+          </div>
+          <div style={styles.panelSub}>
+            {isAdmin ? 'Admin view — all SharePoint sites' : 'View and manage your SharePoint sites'}
+          </div>
         </div>
         <div style={styles.panelActions}>
           <div style={styles.searchWrap}>
@@ -300,7 +314,7 @@ export default function SitesTable({ sites, onEdit, onChangeOwner, onDelete, onA
         <tbody>
           {sorted.length === 0 && (
             <tr>
-              <td colSpan={5} style={{ ...styles.td, textAlign: 'center', color: '#999', padding: '40px' }}>
+              <td colSpan={columns.length} style={{ ...styles.td, textAlign: 'center', color: '#999', padding: '40px' }}>
                 No sites found.
               </td>
             </tr>
@@ -320,6 +334,11 @@ export default function SitesTable({ sites, onEdit, onChangeOwner, onDelete, onA
                   {shortUrl(site.url)} ↗
                 </a>
               </td>
+              {isAdmin && (
+                <td style={{ ...styles.td, width: '180px', color: '#555' }}>
+                  {site.owner || 'Unassigned'}
+                </td>
+              )}
               <td style={styles.td}>{site.storage}</td>
               <td style={{ ...styles.td, color: '#555' }}>{site.accessed}</td>
               <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
